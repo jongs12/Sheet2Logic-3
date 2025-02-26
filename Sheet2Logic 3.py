@@ -262,7 +262,7 @@ while True:
         if len(alrexist)>0 :
             print(f"{', '.join(alrexist)} 파일이 이미 존재합니다. 그래도 계속하시겠습니까?",end=" ")
             choose=input("(y/n) ")
-            if choose!="y" :
+            if choose.strip().lower()!="y" :
                 print("폴더 이름이나 경로를 다시 입력해 주세요.")
                 continue
         for I in range(len(logic)) :
