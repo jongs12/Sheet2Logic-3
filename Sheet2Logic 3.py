@@ -147,7 +147,7 @@ for file in files : #file: 폴더 내 각 파일의 이름
                     note=note_code[note_name.index(line[0])-3+pitch]
                     sheet.append((beat,track,note))
                 finally: 
-                    beat+=howmanybeats(line,1)/speed
+                    beat+=howmanybeats(line,0)/speed
             
             else : #대기
                 beat+=howmanybeats(line,0)/speed
