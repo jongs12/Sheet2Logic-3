@@ -72,6 +72,7 @@ note_code=['0.00', '0.01', '0.02', '0.03', '0.04', '0.05', '0.06', '0.07', '0.08
 track=0
 sheet=[]
 drumtrack=[]
+prevname="<비어 있음>"
 
 #파일 하나씩 확인
 for file in files : #file: 폴더 내 각 파일의 이름
@@ -85,7 +86,7 @@ for file in files : #file: 폴더 내 각 파일의 이름
             continue
     
     #인코딩 성공한 파일
-    filename=file.split(".")[0]
+    filename=".".join(file.split(".")[0:-1])
     print(70*"-")
 
     print(f"'{filename}' 트랙은 몇 번 반복하나요?")
@@ -122,7 +123,9 @@ for file in files : #file: 폴더 내 각 파일의 이름
     choose=input(f"'{filename}' 트랙의 악기를 드럼으로 고정할까요? (y/n) ")
     if choose.strip().lower()=="y" :
         drumtrack.append(track)
-    track+=1
+    if "-".join(filename.split("-")[0:-1]).strip() != prevname :
+        track+=1
+        prevname="-".join(filename.split("-")[0:-1]).strip()
 
     #박자가 정해져 있지 않을 때 기본값 함수
     def howmanybeats(got, default):
