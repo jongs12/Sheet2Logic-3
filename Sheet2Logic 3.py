@@ -30,7 +30,7 @@ while True:
         #폴더 내 txt 파일 개수 세기
         txtcount=0
         for file in files :
-            if len(file.split("."))>1 and file.split(".")[1] == "txt" :
+            if len(file.split("."))>1 and file.split(".")[-1] == "txt" :
                 txtcount+=1
         if txtcount==0 : #폴더 내 txt 파일이 없음
             print("해당 경로에 txt 파일이 존재하지 않습니다. 다시 입력해 주세요.")
@@ -74,6 +74,15 @@ sheet=[]
 drumtrack=[]
 prevname="<비어 있음>"
 
+#파일 확장자 제거 함수
+def cutextension(file,by=".",strip=True):
+    if file.count(by)>0 :
+        cut = by.join(file.split(by)[0:-1])
+    else: cut = file
+    if strip==True :
+        return cut.strip()
+    else : return cut
+
 #파일 하나씩 확인
 for file in files : #file: 폴더 내 각 파일의 이름
     try:
@@ -86,7 +95,7 @@ for file in files : #file: 폴더 내 각 파일의 이름
             continue
     
     #인코딩 성공한 파일
-    filename=".".join(file.split(".")[0:-1])
+    filename=cutextension(file,strip=False)
     print(70*"-")
 
     print(f"'{filename}' 트랙은 몇 번 반복하나요?")
@@ -113,19 +122,18 @@ for file in files : #file: 폴더 내 각 파일의 이름
     offset = isthisfloat(offset,0,1) #0 미만 안됨
     print()
 
-    if repeat > 1 :
-        print(f"'{filename}' 트랙의 반복 간 간격은 몇 박자인가요?")
-        delay = input("기본값은 0입니다. 시작 오프셋의 영향을 받지 않습니다.\n")
-        delay = isthisfloat(delay,0,1) #0 미만 안됨
-    else : delay = 0
-    print()
+    # if repeat > 1 :
+    #     print(f"'{filename}' 트랙의 반복 간 간격은 몇 박자인가요?")
+    #     delay = input("기본값은 0입니다. 시작 오프셋의 영향을 받지 않습니다.\n")
+    #     delay = isthisfloat(delay,0,1) #0 미만 안됨
+    # else : delay = 0 #반복 딜레이는 txt 파일에서 직접 설정하세요.
 
     choose=input(f"'{filename}' 트랙의 악기를 드럼으로 고정할까요? (y/n) ")
     if choose.strip().lower()=="y" :
         drumtrack.append(track)
-    if "-".join(filename.split("-")[0:-1]).strip() != prevname :
+    if cutextension(filename,"-") != prevname :
         track+=1
-        prevname="-".join(filename.split("-")[0:-1]).strip()
+        prevname=cutextension(filename,"-")
 
     #박자가 정해져 있지 않을 때 기본값 함수
     def howmanybeats(got, default):
@@ -155,7 +163,7 @@ for file in files : #file: 폴더 내 각 파일의 이름
             else : #대기
                 beat+=howmanybeats(line,0)/speed
 
-        beat+=delay/speed
+        #beat+=delay/speed
     sheet.append((beat,track,0))
 
     ph.close()
