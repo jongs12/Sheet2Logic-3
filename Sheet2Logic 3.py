@@ -131,7 +131,10 @@ for file in files : #file: 폴더 내 각 파일의 이름
     choose=input(f"'{filename}' 트랙의 악기를 드럼으로 고정할까요? (y/n) ")
     if choose.strip().lower()=="y" :
         drumtrack.append(track)
-    if cutextension(filename,"-") != prevname :
+    elif choose.strip().lower()!="n" and "drum" in filename.lower() :
+        drumtrack.append(track) #파일 이름에 drum이 있으면 기본적으로 y
+
+    if cutextension(filename,"-") != prevname : #- 앞의 이름이 다르면 트랙 번호 증가
         track+=1
         prevname=cutextension(filename,"-")
 
@@ -260,6 +263,12 @@ print("로직 코드가 작성된 텍스트 파일을 저장할 폴더의 이름
 print("주의: 입력한 폴더 내에 이름이 같은 파일이 이미 존재할 경우, 기존 파일은 삭제됩니다!")
 while True:
     folder=input(70*"-"+"\n").replace("/","\\").split("\\")
+    if folder==[''] : #아무것도 입력되지 않음
+        choose=input("파일이 프로그램이 존재하는 폴더와 같은 곳에 저장됩니다. 계속하시겠습니까? (y/n) ")
+        if choose.strip().lower()!="y" :
+            print("저장이 취소되었습니다. 폴더 이름이나 경로를 다시 입력해 주세요.")
+            continue
+
     if len(folder) == 1 : #폴더의 경로가 입력되지 않아 기본 경로 추가
         loc_default=__file__.split("\\")
         folder=loc_default[0:-1]+folder
@@ -279,7 +288,7 @@ while True:
             print(f"{', '.join(alrexist)} 파일이 이미 존재합니다. 그래도 계속하시겠습니까?",end=" ")
             choose=input("(y/n) ")
             if choose.strip().lower()!="y" :
-                print("폴더 이름이나 경로를 다시 입력해 주세요.")
+                print("저장이 취소되었습니다. 폴더 이름이나 경로를 다시 입력해 주세요.")
                 continue
         for I in range(len(logic)) :
             with open(f"{folder}\\page {I}.txt","w",encoding="utf8") as ph :
