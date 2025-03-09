@@ -235,8 +235,13 @@ for a,b,c in sheet :
   
     if type(c)==str : #음 연주
         play.append(f"control config block{b} {c}")
-    else : #BPM 변경
-        if c>0 : BPM=c
+    elif c>0 : #BPM 변경
+        BPM=c
+        if len(f"{BPM}")<=18 :
+            play.append(f'print "BPM을 {BPM}(으)로 변경합니다."')
+        else :
+            play.append('print "BPM을 매우 크거나 작은 값으로 변경합니다."')
+
 
 #생성한 내용을 페이지에 붙여넣기
 for I in range(len(play)//996 + 1):
