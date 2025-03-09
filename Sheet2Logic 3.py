@@ -75,11 +75,11 @@ drumtrack=[]
 prevname="<비어 있음>"
 
 #파일 확장자 제거 함수
-def cutextension(file,by=".",strip=True):
+def cutextension(file,by=".",nospace=True):
     if file.count(by)>0 :
         cut = by.join(file.split(by)[0:-1])
     else: cut = file
-    if strip==True :
+    if nospace==True :
         return cut.strip()
     else : return cut
 
@@ -95,7 +95,7 @@ for file in files : #file: 폴더 내 각 파일의 이름
             continue
     
     #인코딩 성공한 파일
-    filename=cutextension(file,strip=False)
+    filename=cutextension(file,nospace=False)
     print(70*"-")
 
     print(f"'{filename}' 트랙은 몇 번 반복하나요?")
@@ -122,11 +122,11 @@ for file in files : #file: 폴더 내 각 파일의 이름
     offset = isthisfloat(offset,0,1) #0 미만 안됨
     print()
 
-    # if repeat > 1 :
+    # if repeat > 1 : #반복 딜레이는 txt 파일에서 직접 설정하세요.
     #     print(f"'{filename}' 트랙의 반복 간 간격은 몇 박자인가요?")
     #     delay = input("기본값은 0입니다. 시작 오프셋의 영향을 받지 않습니다.\n")
     #     delay = isthisfloat(delay,0,1) #0 미만 안됨
-    # else : delay = 0 #반복 딜레이는 txt 파일에서 직접 설정하세요.
+    # else : delay = 0
 
     choose=input(f"'{filename}' 트랙의 악기를 드럼으로 고정할까요? (y/n) ")
     if choose.strip().lower()=="y" :
