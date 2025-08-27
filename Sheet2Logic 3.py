@@ -128,15 +128,15 @@ for file in files : #file: 폴더 내 각 파일의 이름
     #     delay = isthisfloat(delay,0,1) #0 미만 안됨
     # else : delay = 0
 
+    if cutextension(filename,"-") != prevname : #- 앞의 이름이 다르면 트랙 번호 증가
+        track+=1
+        prevname=cutextension(filename,"-")
+
     choose=input(f"'{filename}' 트랙의 악기를 드럼으로 고정할까요? (y/n) ")
     if choose.strip().lower()=="y" :
         drumtrack.append(track)
     elif choose.strip().lower()!="n" and "drum" in filename.lower() :
         drumtrack.append(track) #파일 이름에 drum이 있으면 기본적으로 y
-
-    if cutextension(filename,"-") != prevname : #- 앞의 이름이 다르면 트랙 번호 증가
-        track+=1
-        prevname=cutextension(filename,"-")
 
     #박자가 정해져 있지 않을 때 기본값 함수
     def howmanybeats(got, default):
@@ -212,7 +212,7 @@ jump 31 greaterThan i 9
 write i cell1 1"""]
 
 for I in range(min(963,track)):
-    if I in drumtrack :
+    if I+1 in drumtrack :
         logic[0]+=f"""
 control color block{I+1} 10"""
     else :
@@ -299,3 +299,4 @@ print("\n성공적으로 저장되었습니다!")
 input("Enter를 눌러 종료합니다...")
 system("cls")
 sys.exit(0)
+
