@@ -254,7 +254,7 @@ op div t t 100
 print t
 print "\\n"
 print "[#2030D0]Made with"
-print "[#FFFF00] Sheet2Logic 3"
+print "[#FFFF00] Sheet2Logic 3.5"
 printflush message1"""
 
 #1번째 이후 프로세서 내용 생성
@@ -354,4 +354,5 @@ print("\n성공적으로 저장되었습니다!")
 print(f"{len(process)+1}개의 프로세서를 각각 {block_num}개의 노트블록과 메모리에 연결하세요.")
 input("Enter를 눌러 종료합니다... ")
 system("cls")
+
 sys.exit(0)
