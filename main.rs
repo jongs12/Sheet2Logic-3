@@ -8,7 +8,7 @@ use std::os::windows::ffi::OsStrExt;
 
 const NOTE_NAME: [char; 7] = ['도', '레', '미', '파', '솔', '라', '시']; // 계이름 리스트
 const NOTE_CODE: [i64; 7] = [0, 2, 4, 5, 7, 9, 11]; // 계이름에 대응하는 값
-const INST_LIST: [&'static str; 11] = ["piano", "bells", "square", "saw", "bass", "organ", "synth", "chime", "violin", "harp", "drum"];
+const INST_LIST: [&str; 11] = ["piano", "bells", "square", "saw", "bass", "organ", "synth", "chime", "violin", "harp", "drum"];
 
 #[derive(Debug, Clone)]
 enum Action {
@@ -74,7 +74,7 @@ fn main() {
         match folder_path.canonicalize() {
             Ok(_) => (),
             Err(error) => {
-                println!("{}", error.to_string());
+                println!("{}", error);
                 println!("다시 입력해 주세요.");
                 continue;
             }
@@ -118,7 +118,7 @@ fn main() {
         }
 
         // 폴더 내 txt 파일이 없음
-        if text_files_path.len() == 0 {
+        if text_files_path.is_empty() {
             println!("해당 경로에 txt 파일이 존재하지 않습니다. 다시 입력해 주세요.");
             println!("건너뜁니다.");
             continue;
@@ -170,10 +170,10 @@ fn main() {
         }
 
         // .txt제거
-        let file_name = match file_path.file_name().map(|name| name.to_str().map(|name| match name.rfind('.') {
+        let file_name = match file_path.file_name().and_then(|name| name.to_str().map(|name| match name.rfind('.') {
             Some(index) => &name[..index],
             None => name,
-        })).flatten() {
+        })) {
             Some(name) => name,
             None => {
                 println!("파일 이름 읽기 실패!");
@@ -207,7 +207,7 @@ fn main() {
 
             if words.is_empty() { continue }
 
-            let mut first_word_chars = match words.get(0).map(|words| words.chars()) {
+            let mut first_word_chars = match words.first().map(|words| words.chars()) {
                 Some(first_word) => first_word,
                 None => {
                     println!("첫 번째의 음을 읽을 수 없음!");
@@ -257,11 +257,19 @@ fn main() {
                     note_octave = format!("{}{}", other, other_chars).trim().parse().unwrap_or(4);
                 }
 
-                note_normalization(&mut note_pitch, &mut note_octave);
+                while note_pitch < 0 || note_pitch > 11 {
+                    if note_pitch < 0 {
+                        note_pitch += 12;
+                        note_octave -= 1;
+                    } else if note_pitch > 11 {
+                        note_pitch -= 12;
+                        note_octave += 1;
+                    }
+                }
 
                 let pitch= format!("{}.{:0>2}", note_octave - 1, note_pitch);
                 let note_in_range = match pitch.parse::<f64>() {
-                    Ok(pitch) => (pitch >= 0.0) && (pitch < 7.0),
+                    Ok(pitch) => (0.0..7.0).contains(&pitch),
                     Err(error) => {
                         println!("노트 범위를 알 수 없음!");
                         println!("{}", error);
@@ -354,9 +362,8 @@ fn main() {
             let loop_duration = beat - loop_start_beat;
             for _ in 0..loop_count {
                 total_sheet.extend(loop_component.clone());
-                for i in 0..loop_component.len() {
-                    let current = loop_component[i].beat();
-                    loop_component[i].set_beat(current + loop_duration); // 누적
+                for action in loop_component.iter_mut() {
+                    action.set_beat(action.beat() + loop_duration);
                 }
             }
         }
@@ -364,8 +371,10 @@ fn main() {
         let total_sheet_last_beat = total_sheet.last().map(|last| last.beat());
         let loop_component_first_beat = loop_component.first().map(|first| first.beat());
 
-        if !loop_component.is_empty() && total_sheet_last_beat.unwrap() < loop_component_first_beat.unwrap() {
-            total_sheet.push(Action::DoNothing { beat: loop_component[0].beat() });
+        if let (Some(last_beat), Some(first_beat)) = (total_sheet_last_beat, loop_component_first_beat) {
+            if last_beat < first_beat {
+                total_sheet.push(Action::DoNothing { beat: loop_component[0].beat() });
+            }
         } else if loop_component.is_empty() && !intro.is_empty() && total_sheet_last_beat.unwrap() < beat {
             total_sheet.push(Action::DoNothing { beat });
         }
@@ -407,17 +416,16 @@ printflush message1", song_name);
     let mut process = Vec::new();
     let mut process_one_page = vec!["setrate 100".to_string(), "read playing cell1 0".to_string(), "jump 1 notEqual playing 1".to_string()];
 
-    let mut index = 0;
     let total_sheet_len = total_sheet.len();
-    for sheet in total_sheet {
-        let current_total_sheet_beat = sheet.beat();
+    for (index, action) in total_sheet.into_iter().enumerate() {
+        let current_total_sheet_beat = action.beat();
         if current_total_sheet_beat > beat {
             let waiting_time = 60.0 * (current_total_sheet_beat - beat) / current_beat_per_minutes;
             process_one_page.push(format!("wait {}", waiting_time));
             overflow_process_code_size(index, total_sheet_len, &mut process_one_page, &mut process);
             beat = current_total_sheet_beat;
         }
-        match sheet {
+        match action {
             Action::PlayNote { pitch, block, .. } => {
                 process_one_page.push(format!("control config block{} {}", block, pitch));
                 overflow_process_code_size(index, total_sheet_len, &mut process_one_page, &mut process);
@@ -433,7 +441,6 @@ printflush message1", song_name);
             },
             _ => ()
         }
-        index += 1;
     }
 
     process_one_page.push("write 0 cell1 0".to_string());
@@ -483,6 +490,7 @@ printflush message1", song_name);
         }
 
         let mut using_file_name = Vec::new();
+        // page 0.txt 포함 전테 process 생성. process는 page 0.txt가 제외된 상태이니 길이의 +1만큼 반복
         for i in 0..=process.len() {
             using_file_name.push(format!("page {}.txt", i));
         }
@@ -518,42 +526,17 @@ printflush message1", song_name);
             }
         }
         let page0_path = folder.join("page 0.txt");
-        let mut file = match File::create(page0_path) {
-            Ok(file) => file,
-            Err(error) => {
-                println!("파일 생성 실패.");
-                println!("{}", error);
-                println!("건너뜁니다.");
+        if create_and_save_file(page0_path, &process_0).is_none() {
+            println!("page 0..txt 저장 실패.");
+            println!("중단합니다.");
+            continue 'save
+        }
+
+        for (index, current_process) in process.iter().enumerate() {
+            let page_path = folder.join(format!("page {}.txt", index + 1));
+            if create_and_save_file(page_path, &current_process).is_none() {
                 continue
             }
-        };
-        match file.write_all(process_0.as_bytes()) {
-            Ok(_) => (),
-            Err(error) => {
-                println!("파일 쓰기 실패");
-                println!("{}", error);
-                println!("inner: {}", process_0);
-            }
-        }
-        for i in 0..process.len() {
-            let page_path = folder.join(format!("page {}.txt", i + 1));
-            let mut file = match File::create(page_path) {
-                Ok(file) => file,
-                Err(error) => {
-                    println!("파일 생성 실패");
-                    println!("{}", error);
-                    println!("넘너뜁니다.");
-                    continue
-                }
-            };
-            match file.write_all(process[i].as_bytes()) {
-                Ok(_) => (),
-                Err(error) => {
-                    println!("파일 쓰기 실패");
-                    println!("{}", error);
-                    println!("inner: {}", process_0);
-                }
-            };
         }
         break
     }
@@ -562,18 +545,6 @@ printflush message1", song_name);
     println!("{}개의 프로세서를 각각 {}개의 노트블록과 메모리에 연결하세요.", process.len() + 1, block_num);
     println!("Enter를 눌러 종료합니다... ");
     let _ = io::stdin().read_line(&mut String::new());
-}
-
-fn note_normalization(note_pitch: &mut i64, note_octave: &mut i64) {
-    while *note_pitch < 0 || *note_pitch > 11 {
-        if *note_pitch < 0 {
-            *note_pitch += 12;
-            *note_octave -= 1;
-        } else if *note_pitch > 11 {
-            *note_pitch -= 12;
-            *note_octave += 1;
-        }
-    }
 }
 
 fn overflow_process_code_size(index: usize, total_sheet_len: usize, process_one_page: &mut Vec<String>, process: &mut Vec<String>) {
@@ -608,4 +579,25 @@ fn find_duplicates(existing_files: &[OsString], target_files: &[String]) -> Vec<
     }
 
     duplicates
+}
+
+fn create_and_save_file(page_path: PathBuf, current_process: &str) -> Option<()> {
+    let mut file = match File::create(page_path) {
+        Ok(file) => file,
+        Err(error) => {
+            println!("파일 생성 실패");
+            println!("{}", error);
+            println!("건너뜁니다.");
+            return None
+        }
+    };
+    match file.write_all(current_process.as_bytes()) {
+        Ok(_) => (),
+        Err(error) => {
+            println!("파일 쓰기 실패");
+            println!("{}", error);
+            println!("inner: {}", current_process);
+        }
+    };
+    Some(())
 }
