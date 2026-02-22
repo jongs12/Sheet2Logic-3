@@ -90,7 +90,7 @@ fn main() {
         //let mut midi_files_path = Vec::new();
         let mut text_files_path = Vec::new();
 
-        // 폴더 내 txt파일 개수 세기 및 위치 탐색.
+        // 폴더 내 txt파일 개수 세기 및 위치 탐색
         for entry in match fs::read_dir(folder_path) {
             Ok(read_dir) => read_dir,
             Err(error) => {
@@ -490,7 +490,7 @@ printflush message1", song_name);
         }
 
         let mut using_file_name = Vec::new();
-        // page 0.txt 포함 전테 process 생성. process는 page 0.txt가 제외된 상태이니 길이의 +1만큼 반복
+        // page 0.txt 포함 전체 process 생성, process는 page 0.txt가 제외된 상태이니 길이의 +1만큼 반복
         for i in 0..=process.len() {
             using_file_name.push(format!("page {}.txt", i));
         }
